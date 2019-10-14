@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include "commands.h"
 #include "buffer.h"
 
 int main(int argc, char *argv[])
@@ -11,14 +12,28 @@ int main(int argc, char *argv[])
         print_prompt();
         read_input(input_buffer);
 
-        if (strcmp(input_buffer->buffer, ".exit") == 0)
-        {
-            close_input_buffer(input_buffer);
-            exit(EXIT_SUCCESS);
+        if(input_buffer->buffer[0] == '.') {
+            switch(do_meta_command(input_buffer)) {
+                case (META_COMMAND_SUCCESS):
+                    continue;
+                case (META_COMMAND_UNRECOGNIZED_COMMAND):
+                    printf("Unrecognized command '%s'\n", input_buffer->buffer);
+                    continue;
+            }
         }
-        else
-        {
-            printf("Unrecognized command '%s' .\n", input_buffer->buffer);
+
+        Statement statement;
+        switch (prepare_statement(input_buffer, &statement)) {
+            case (PREPARE_SUCCESS):
+                break;
+            case (PREPARE_UNRECOGNIZED_STATEMENT):
+                printf("Unrecognized keyword at start of '%s' .\n",
+                        input_buffer->buffer);
+                continue;
+
         }
+
+        execute_statement(&statement);
+        printf("Executed.\n");
     }
 }
